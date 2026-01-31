@@ -58,9 +58,29 @@ class LSTMCentralizedCritic(TorchModelV2, nn.Module):
     # ACTOR FORWARD
     # =====================================================
     def forward(self, input_dict, state, seq_lens):
-        logits, _ = self.actor(input_dict, state, seq_lens)
-        self._last_batch_size = logits.shape[0]
-        return logits, state
+        obs = input_dict["obs"]  # [B*T, obs_dim]
+        B = seq_lens.shape[0]
+        T = obs.shape[0] // B
+
+        obs = obs.view(B, T, self.obs_dim)
+        x = self.encoder(obs)
+
+        h, c = state
+
+        # 🔥 RLlib-safe reshape
+        if h.dim() == 2:  # [B, H]
+            h = h.unsqueeze(0)
+            c = c.unsqueeze(0)
+
+        lstm_out, (h, c) = self.lstm(x, (h, c))
+
+        logits = self.policy_head(lstm_out)
+        self._value_out = self.value_head(lstm_out).squeeze(-1)
+
+        return logits.reshape(-1, logits.shape[-1]), [
+            h.squeeze(0),
+            c.squeeze(0),
+        ]
 
     # =====================================================
     # CRITIC FORWARD (called manually from policy)

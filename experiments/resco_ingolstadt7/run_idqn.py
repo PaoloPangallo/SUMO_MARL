@@ -1,15 +1,14 @@
 import os
 import random
-import shutil
-
 import numpy as np
 import ray
 import sumo_rl
 import torch
-from ray.rllib.algorithms.ppo import PPOConfig
+import shutil
+
+from ray.rllib.algorithms.dqn import DQNConfig
 from ray.rllib.env.wrappers.pettingzoo_env import ParallelPettingZooEnv
 from ray.tune.registry import register_env
-from supersuit import pad_observations_v0, pad_action_space_v0
 
 # ============================================================
 # PATHS
@@ -26,13 +25,13 @@ if os.path.exists(SUMO_DIR):
 os.makedirs(SUMO_DIR, exist_ok=True)
 
 # ============================================================
-# CONFIGURAZIONE RAPIDA (1 SEED, 50 ITERAZIONI)
+# CONFIG
 # ============================================================
 BEGIN_TIME = 57600
 EP_LEN = 3600
 DELTA_T = 10
-TRAIN_ITERS = 50  # Numero fisso di iterazioni
-CURRENT_SEED = 42  # Seed fisso
+TRAIN_ITERS = 50
+CURRENT_SEED = 42
 
 
 def set_seed(seed):
@@ -42,8 +41,10 @@ def set_seed(seed):
 
 
 # ============================================================
-# ENV (Default Reward: Change in cumulative delay)
+# ENV
 # ============================================================
+from supersuit import pad_observations_v0, pad_action_space_v0
+
 def env_creator(config):
     env = sumo_rl.parallel_env(
         net_file=NET_FILE,
@@ -58,38 +59,46 @@ def env_creator(config):
         out_csv_name=os.path.join(SUMO_DIR, "idqn_test"),
         use_gui=False,
     )
-
-    # 🔴 QUI ERA IL PROBLEMA → padding OBBLIGATORIO
     env = pad_observations_v0(env)
     env = pad_action_space_v0(env)
-
-    # SOLO DOPO il padding
     return ParallelPettingZooEnv(env)
 
 
-
-ENV_NAME = "ippo_quick_test"
+ENV_NAME = "idqn_quick_test"
 register_env(ENV_NAME, env_creator)
 
 
 # ============================================================
-# PPO CONFIG (IPPO)
+# DQN CONFIG (IDQN)
 # ============================================================
 def build_config():
     return (
-        PPOConfig()
+        DQNConfig()
         .environment(env=ENV_NAME, disable_env_checking=True)
         .framework("torch")
         .rollouts(
-            num_rollout_workers=4,  # Parallelismo per velocità
+            num_rollout_workers=4,
             rollout_fragment_length=900,
-            batch_mode="truncate_episodes",
         )
+
         .training(
-            train_batch_size=3600,  # Update ogni 2000 step
-            sgd_minibatch_size=500,
-            num_sgd_iter=5,
+            gamma=0.99,
+            lr=1e-4,
+            train_batch_size=3600,
             model={"fcnet_hiddens": [128, 128]},
+            replay_buffer_config={
+                "type": "MultiAgentReplayBuffer",
+                "capacity": 100_000,
+            },
+            target_network_update_freq=1000,
+        )
+        .exploration(
+            exploration_config={
+                "type": "EpsilonGreedy",
+                "initial_epsilon": 1.0,
+                "final_epsilon": 0.05,
+                "epsilon_timesteps": 20_000,
+            }
         )
         .multi_agent(
             policies={"shared": (None, None, None, {})},
@@ -106,8 +115,8 @@ def build_config():
 def main():
     ray.init(ignore_reinit_error=True)
 
-    print(f"\n" + "=" * 40)
-    print(f"🚦 IPPO QUICK TEST - SEED {CURRENT_SEED}")
+    print("\n" + "=" * 40)
+    print(f"🚦 IDQN QUICK TEST - SEED {CURRENT_SEED}")
     print("=" * 40, flush=True)
 
     set_seed(CURRENT_SEED)
@@ -117,7 +126,6 @@ def main():
         res = algo.train()
         reward = res.get("episode_reward_mean", np.nan)
 
-        # Stampa feedback ad ogni iterazione
         print(
             f"[Iter {it + 1:02d}/50] "
             f"Reward Medio: {reward:8.2f}",
@@ -125,8 +133,8 @@ def main():
         )
 
     algo.stop()
-    print("\n✅ Test IPPO completato.")
     ray.shutdown()
+    print("\n✅ Test IDQN completato.")
 
 
 if __name__ == "__main__":

@@ -13,11 +13,12 @@ MIN_EP = 2
 SMOOTH_WINDOW = 5
 
 ALGORITHMS = {
+    "idqn": "outputs/sumo_idqn",
     "mappo": "mappo_env/outputs/sumo_mappo/ingolstadt21",
     "mappo_atn": "mappo_env_att/outputs/sumo_mappo_attention/ingolstadt21",
-
-
+    "mappo_gat": "gat_mappo/outputs/sumo_mappo_gat/ingolstadt21"
 }
+
 
 FIXED_TIME_CSV = "outputs_fixed_time/fixed_time_metrics.csv"
 

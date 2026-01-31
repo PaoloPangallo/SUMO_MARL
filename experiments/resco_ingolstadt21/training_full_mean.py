@@ -9,17 +9,14 @@ import matplotlib.pyplot as plt
 # CONFIG
 # ============================================================
 SCENARIO = os.path.basename(os.getcwd())
-MIN_EP = 4
+MIN_EP = 90
 SMOOTH_WINDOW = 5
 
 ALGORITHMS = {
-    "idqn": "outputs/sumo_idqn",
     "ippo": "outputs/sumo_ippo",
-    "qmix" : "outputs/sumo_qmix",
-    "mappo": "mappo_env/outputs/sumo_mappo/cologne1",
-    "mappo_atn": "mappo_env_att/outputs/sumo_mappo_attention/cologne1",
-    "mappo_gat": "gat_mappo/outputs/sumo_mappo_attention/cologne1",
-
+    "mappo": "mappo_env/outputs/sumo_mappo/ingolstadt21",
+    "mappo_atn": "mappo_env_att/outputs/sumo_mappo_attention/ingolstadt21",
+    "mappo_gat": "gat_mappo/outputs/sumo_mappo_gat/ingolstadt21"
 }
 
 FIXED_TIME_CSV = "outputs_fixed_time/fixed_time_metrics.csv"
@@ -37,13 +34,13 @@ def extract_ep(fname):
 
 def read_sumo_csv(csv):
     try:
-        return pd.read_csv(csv, engine="python")
+        return pd.read_csv(csv)
     except Exception:
         return None
 
 
 # ============================================================
-# 1️⃣ FIXED TIME
+# 1️⃣ FIXED TIME BASELINE
 # ============================================================
 summary_rows = []
 
@@ -58,7 +55,7 @@ if os.path.exists(FIXED_TIME_CSV):
     })
 
 # ============================================================
-# 2️⃣ RL CONTROLLERS — CURVE + BEST
+# 2️⃣ RL CONTROLLERS — METRICHE SUMO CORRETTE
 # ============================================================
 curve_rows = []
 
@@ -69,8 +66,7 @@ for algo, folder in ALGORITHMS.items():
 
     csvs = glob.glob(os.path.join(folder, "**", "*.csv"), recursive=True)
 
-    best_wait = float("inf")
-    best_row = None
+    ep_waits, ep_speeds, ep_queues = [], [], []
 
     for csv in csvs:
         ep = extract_ep(os.path.basename(csv))
@@ -81,17 +77,23 @@ for algo, folder in ALGORITHMS.items():
         if df is None:
             continue
 
-        if "system_mean_waiting_time" not in df.columns:
+        required_cols = {
+            "system_mean_waiting_time",
+            "system_mean_speed",
+            "system_total_stopped",
+        }
+        if not required_cols.issubset(df.columns):
             continue
 
-        mean_wait = df["system_mean_waiting_time"].mean()
-        mean_speed = df["system_mean_speed"].mean()
+        # ✅ METRICHE SUMO CORRETTE
+        mean_wait = df["system_mean_waiting_time"].iloc[-1]
+        mean_speed = df["system_mean_speed"].iloc[-1]
         mean_queue = df["system_total_stopped"].mean()
 
         if not np.isfinite(mean_wait) or mean_wait <= 0:
             continue
 
-        # salva per curva
+        # per curve di training
         curve_rows.append({
             "scenario": SCENARIO,
             "controller": algo,
@@ -101,19 +103,20 @@ for algo, folder in ALGORITHMS.items():
             "mean_queue": mean_queue,
         })
 
-        # BEST (su mean_wait)
-        if mean_wait < best_wait:
-            best_wait = mean_wait
-            best_row = {
-                "scenario": SCENARIO,
-                "controller": algo,
-                "mean_wait": mean_wait,
-                "mean_speed": mean_speed,
-                "mean_queue": mean_queue,
-            }
+        # per aggregazione finale
+        ep_waits.append(mean_wait)
+        ep_speeds.append(mean_speed)
+        ep_queues.append(mean_queue)
 
-    if best_row:
-        summary_rows.append(best_row)
+    # 👉 MEDIA SUGLI EPISODI (ep >= MIN_EP)
+    if len(ep_waits) > 0:
+        summary_rows.append({
+            "scenario": SCENARIO,
+            "controller": algo,
+            "mean_wait": float(np.mean(ep_waits)),
+            "mean_speed": float(np.mean(ep_speeds)),
+            "mean_queue": float(np.mean(ep_queues)),
+        })
 
 # ============================================================
 # SAVE CSV
@@ -124,11 +127,11 @@ df_curves = pd.DataFrame(curve_rows)
 df_summary.to_csv(OUT_SUMMARY, index=False)
 df_curves.to_csv(OUT_CURVES, index=False)
 
-print("\n✅ SUMMARY")
+print("\n✅ SUMMARY (metriche SUMO corrette, media sugli episodi)")
 print(df_summary)
 
 # ============================================================
-# 3️⃣ PLOT CURVE
+# 3️⃣ PLOT TRAINING CURVES
 # ============================================================
 def plot_metric(metric, ylabel):
     plt.figure(figsize=(8, 5))

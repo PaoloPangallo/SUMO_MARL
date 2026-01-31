@@ -9,17 +9,16 @@ import matplotlib.pyplot as plt
 # CONFIG
 # ============================================================
 SCENARIO = os.path.basename(os.getcwd())
-MIN_EP = 4
+MIN_EP = 30
 SMOOTH_WINDOW = 5
 
 ALGORITHMS = {
     "idqn": "outputs/sumo_idqn",
     "ippo": "outputs/sumo_ippo",
-    "qmix" : "outputs/sumo_qmix",
-    "mappo": "mappo_env/outputs/sumo_mappo/cologne1",
-    "mappo_atn": "mappo_env_att/outputs/sumo_mappo_attention/cologne1",
-    "mappo_gat": "gat_mappo/outputs/sumo_mappo_attention/cologne1",
-
+    "qmix": "outputs/sumo_qmix",
+    "mappo": "mappo_env/outputs/sumo_mappo/ingolstadt1",
+    "mappo_atn": "mappo_env_att/outputs/sumo_mappo_attention/ingolstadt1",
+    "mappo_gat": "gat_mappo/outputs/sumo_mappo_gat/ingolstadt1",
 }
 
 FIXED_TIME_CSV = "outputs_fixed_time/fixed_time_metrics.csv"
@@ -37,13 +36,13 @@ def extract_ep(fname):
 
 def read_sumo_csv(csv):
     try:
-        return pd.read_csv(csv, engine="python")
+        return pd.read_csv(csv)
     except Exception:
         return None
 
 
 # ============================================================
-# 1️⃣ FIXED TIME
+# 1️⃣ FIXED TIME BASELINE
 # ============================================================
 summary_rows = []
 
@@ -58,7 +57,7 @@ if os.path.exists(FIXED_TIME_CSV):
     })
 
 # ============================================================
-# 2️⃣ RL CONTROLLERS — CURVE + BEST
+# 2️⃣ RL CONTROLLERS — METRICHE CORRETTE
 # ============================================================
 curve_rows = []
 
@@ -69,8 +68,7 @@ for algo, folder in ALGORITHMS.items():
 
     csvs = glob.glob(os.path.join(folder, "**", "*.csv"), recursive=True)
 
-    best_wait = float("inf")
-    best_row = None
+    ep_waits, ep_speeds, ep_queues = [], [], []
 
     for csv in csvs:
         ep = extract_ep(os.path.basename(csv))
@@ -81,17 +79,22 @@ for algo, folder in ALGORITHMS.items():
         if df is None:
             continue
 
-        if "system_mean_waiting_time" not in df.columns:
+        required = {
+            "system_mean_waiting_time",
+            "system_mean_speed",
+            "system_total_stopped",
+        }
+        if not required.issubset(df.columns):
             continue
 
-        mean_wait = df["system_mean_waiting_time"].mean()
-        mean_speed = df["system_mean_speed"].mean()
+        # ✔️ METRICHE SUMO CORRETTE
+        mean_wait = df["system_mean_waiting_time"].iloc[-1]
+        mean_speed = df["system_mean_speed"].iloc[-1]
         mean_queue = df["system_total_stopped"].mean()
 
         if not np.isfinite(mean_wait) or mean_wait <= 0:
             continue
 
-        # salva per curva
         curve_rows.append({
             "scenario": SCENARIO,
             "controller": algo,
@@ -101,46 +104,37 @@ for algo, folder in ALGORITHMS.items():
             "mean_queue": mean_queue,
         })
 
-        # BEST (su mean_wait)
-        if mean_wait < best_wait:
-            best_wait = mean_wait
-            best_row = {
-                "scenario": SCENARIO,
-                "controller": algo,
-                "mean_wait": mean_wait,
-                "mean_speed": mean_speed,
-                "mean_queue": mean_queue,
-            }
+        ep_waits.append(mean_wait)
+        ep_speeds.append(mean_speed)
+        ep_queues.append(mean_queue)
 
-    if best_row:
-        summary_rows.append(best_row)
+    if len(ep_waits) > 0:
+        summary_rows.append({
+            "scenario": SCENARIO,
+            "controller": algo,
+            "mean_wait": float(np.mean(ep_waits)),
+            "mean_speed": float(np.mean(ep_speeds)),
+            "mean_queue": float(np.mean(ep_queues)),
+        })
 
 # ============================================================
 # SAVE CSV
 # ============================================================
-df_summary = pd.DataFrame(summary_rows)
-df_curves = pd.DataFrame(curve_rows)
+pd.DataFrame(summary_rows).to_csv(OUT_SUMMARY, index=False)
+pd.DataFrame(curve_rows).to_csv(OUT_CURVES, index=False)
 
-df_summary.to_csv(OUT_SUMMARY, index=False)
-df_curves.to_csv(OUT_CURVES, index=False)
-
-print("\n✅ SUMMARY")
-print(df_summary)
+print("\n✅ SUMMARY (metriche corrette SUMO)")
+print(pd.DataFrame(summary_rows))
 
 # ============================================================
-# 3️⃣ PLOT CURVE
+# 3️⃣ PLOT CURVES
 # ============================================================
 def plot_metric(metric, ylabel):
     plt.figure(figsize=(8, 5))
-
-    for algo in df_curves["controller"].unique():
-        sub = df_curves[df_curves["controller"] == algo]
-        sub = sub.sort_values("episode")
-
-        y = sub[metric].rolling(
-            SMOOTH_WINDOW, min_periods=1
-        ).mean()
-
+    for algo in pd.DataFrame(curve_rows)["controller"].unique():
+        sub = pd.DataFrame(curve_rows)
+        sub = sub[sub["controller"] == algo].sort_values("episode")
+        y = sub[metric].rolling(SMOOTH_WINDOW, min_periods=1).mean()
         plt.plot(sub["episode"], y, label=algo.upper())
 
     plt.xlabel("Episode")
@@ -156,8 +150,3 @@ def plot_metric(metric, ylabel):
 plot_metric("mean_wait", "Mean Waiting Time (s)")
 plot_metric("mean_speed", "Mean Speed (m/s)")
 plot_metric("mean_queue", "Mean Queue")
-
-print("\n📈 Curve salvate:")
-print(" - curve_mean_wait.png")
-print(" - curve_mean_speed.png")
-print(" - curve_mean_queue.png")
