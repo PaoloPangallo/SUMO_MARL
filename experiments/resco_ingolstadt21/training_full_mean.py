@@ -9,11 +9,12 @@ import matplotlib.pyplot as plt
 # CONFIG
 # ============================================================
 SCENARIO = os.path.basename(os.getcwd())
-MIN_EP = 90
+MIN_EP = 2
 SMOOTH_WINDOW = 5
 
 ALGORITHMS = {
     "ippo": "outputs/sumo_ippo",
+    "idqn": "outputs/sumo_idqn",
     "mappo": "mappo_env/outputs/sumo_mappo/ingolstadt21",
     "mappo_atn": "mappo_env_att/outputs/sumo_mappo_attention/ingolstadt21",
     "mappo_gat": "gat_mappo/outputs/sumo_mappo_gat/ingolstadt21"

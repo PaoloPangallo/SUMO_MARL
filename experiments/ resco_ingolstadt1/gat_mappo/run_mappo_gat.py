@@ -29,7 +29,7 @@ ROUTE_FILE = os.path.join(
 
 
 OUT_DIR = "outputs"
-SUMO_DIR = os.path.join(OUT_DIR, "sumo_mappo_gat", "ingolstadt1")
+SUMO_DIR = os.path.join(OUT_DIR, "sumo_mappo_gat", "ingolstadt1_gui")
 
 if os.path.exists(SUMO_DIR):
     shutil.rmtree(SUMO_DIR)
@@ -77,7 +77,7 @@ def env_creator(config):
 
     return ParallelPettingZooEnv(env)
 
-ENV_NAME = "mappo_gat_cologne1"
+ENV_NAME = "mappo_gat_ingostald1"
 register_env(ENV_NAME, env_creator)
 
 # ============================================================
@@ -103,8 +103,8 @@ def build_config():
         .environment(env=ENV_NAME, disable_env_checking=True)
         .framework("torch")
         .rollouts(
-            num_rollout_workers=4,          # ❗ NON TOCCATO
-            rollout_fragment_length=900,
+            num_rollout_workers=1,          # ❗ NON TOCCATO
+            rollout_fragment_length=3600,
             batch_mode="truncate_episodes",
         )
         .training(

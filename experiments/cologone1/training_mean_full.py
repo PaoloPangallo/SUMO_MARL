@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 # CONFIG
 # ============================================================
 SCENARIO = os.path.basename(os.getcwd())
-MIN_EP = 4
+MIN_EP = 110
 SMOOTH_WINDOW = 5
 
 ALGORITHMS = {

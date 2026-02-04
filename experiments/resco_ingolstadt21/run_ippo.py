@@ -86,7 +86,7 @@ def build_config():
             batch_mode="truncate_episodes",
         )
         .training(
-            train_batch_size=3600,  # Update ogni 2000 step
+            train_batch_size=3600,  # Update ogni 3600 step
             sgd_minibatch_size=500,
             num_sgd_iter=5,
             model={"fcnet_hiddens": [128, 128]},

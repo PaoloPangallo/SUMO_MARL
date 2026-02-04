@@ -28,7 +28,7 @@ ROUTE_FILE = os.path.join(
 )
 
 OUT_DIR = "outputs"
-SUMO_DIR = os.path.join(OUT_DIR, "sumo_mappo_attention", "cologne1")
+SUMO_DIR = os.path.join(OUT_DIR, "sumo_mappo_attention", "cologne1_gui")
 
 if os.path.exists(SUMO_DIR):
     shutil.rmtree(SUMO_DIR)
@@ -67,7 +67,7 @@ def env_creator(config):
         max_green=60,
         reward_fn="diff-waiting-time",
         out_csv_name=os.path.join(SUMO_DIR, "mappo_attention"),
-        use_gui=False,
+        use_gui=True,
     )
 
     env = pad_observations_v0(env)
@@ -102,8 +102,8 @@ def build_config():
         .environment(env=ENV_NAME, disable_env_checking=True)
         .framework("torch")
         .rollouts(
-            num_rollout_workers=4,
-            rollout_fragment_length=900,
+            num_rollout_workers=1,
+            rollout_fragment_length=3600,
             batch_mode="truncate_episodes",
         )
         .training(

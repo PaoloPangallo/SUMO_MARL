@@ -29,7 +29,7 @@ ROUTE_FILE = os.path.join(
 
 
 OUT_DIR = "outputs"
-SUMO_DIR = os.path.join(OUT_DIR, "sumo_mappo_gat", "ingolstadt21")
+SUMO_DIR = os.path.join(OUT_DIR, "sumo_mappo_gat", "ingolstadt21_gui")
 
 if os.path.exists(SUMO_DIR):
     shutil.rmtree(SUMO_DIR)
@@ -42,7 +42,7 @@ BEGIN_TIME = 57600
 EP_LEN = 3600
 DELTA_T = 10
 
-TRAIN_ITERS = 50
+TRAIN_ITERS = 100
 SEED = 42
 NUM_AGENTS = 21   # cologne1 → 1 semaforo
 
@@ -69,7 +69,7 @@ def env_creator(config):
         max_green=60,
         reward_fn="diff-waiting-time",
         out_csv_name=os.path.join(SUMO_DIR, "mappo_gat"),
-        use_gui=False,
+        use_gui=True,
     )
 
     env = pad_observations_v0(env)
@@ -103,8 +103,8 @@ def build_config():
         .environment(env=ENV_NAME, disable_env_checking=True)
         .framework("torch")
         .rollouts(
-            num_rollout_workers=4,          # ❗ NON TOCCATO
-            rollout_fragment_length=900,
+            num_rollout_workers=1,          # ❗ NON TOCCATO
+            rollout_fragment_length=3600,
             batch_mode="truncate_episodes",
         )
         .training(
