@@ -1,9 +1,9 @@
 # Multi-Agent Reinforcement Learning per il Controllo Traffico
-**Teoria, Algoritmi e Valutazione Sperimentale in SUMO (TraCI)** :contentReference[oaicite:0]{index=0}
+**Teoria, Algoritmi e Valutazione Sperimentale in SUMO (TraCI)** 
 
 <font color="#57606a">Autore:</font> **Paolo Pangallo** — <font color="#57606a">Matricola:</font> **263594**  
 <font color="#57606a">Università:</font> **Università della Calabria (DIMES) — Ingegneria Informatica**  
-<font color="#57606a">Anno Accademico:</font> **2025/2026** :contentReference[oaicite:1]{index=1}
+<font color="#57606a">Anno Accademico:</font> **2025/2026** 
 
 ---
 
@@ -21,7 +21,7 @@
 ---
 
 ## 1) Panoramica
-Il **controllo semaforico su reti urbane** multi-intersezione è un problema **intrinsecamente multi-agente**: ogni incrocio decide localmente, ma la qualità globale dipende dalle **interazioni** tra incroci connessi (spillback, propagazione code, sincronizzazione “green wave”, trade-off tra corridoi). :contentReference[oaicite:2]{index=2}
+Il **controllo semaforico su reti urbane** multi-intersezione è un problema **intrinsecamente multi-agente**: ogni incrocio decide localmente, ma la qualità globale dipende dalle **interazioni** tra incroci connessi (spillback, propagazione code, sincronizzazione “green wave”, trade-off tra corridoi).
 
 Questo repository confronta, in SUMO, famiglie di algoritmi:
 - **Independent** (baseline scalabili ma senza coordinazione esplicita)
@@ -34,18 +34,18 @@ Questo repository confronta, in SUMO, famiglie di algoritmi:
 Il problema viene discusso come **Markov Game**: stato globale `s`, azione congiunta `a=(a1,...,an)`, transizione `P(s'|s,a)`, reward (cooperativo), e fattore di sconto. Nel traffico:
 - `s` include densità/code/velocità/occupazioni sull’intera rete,
 - ogni agente `i` sceglie `ai` (fase o azione discreta del semaforo),
-- l’evoluzione è governata dal simulatore (SUMO). :contentReference[oaicite:3]{index=3}
+- l’evoluzione è governata dal simulatore (SUMO).}
 
 In esecuzione la policy è decentralizzata e fattorizzata:
 \[
 \pi(a|o)=\prod_i \pi_i(a_i|o_i)
 \]
-e in training (a seconda dell’algoritmo) può usare informazione globale (CTDE). :contentReference[oaicite:4]{index=4}
+e in training (a seconda dell’algoritmo) può usare informazione globale (CTDE).
 
 ---
 
 ## 3) Scenari sperimentali (RESCO)
-Il progetto usa sottoreti del benchmark **RESCO** (Cologne e Ingolstadt), disponibili in `nets/RESCO` del framework **sumo-rl**. :contentReference[oaicite:5]{index=5}
+Il progetto usa sottoreti del benchmark **RESCO** (Cologne e Ingolstadt), disponibili in `nets/RESCO` del framework **sumo-rl**.
 
 ### 3.1 Scenari usati e lettura qualitativa
 | Scenario | Città | # Agenti | Lettura qualitativa |
@@ -75,19 +75,19 @@ Ogni episodio copre una finestra temporale di **1 ora**, con:
 | ingolstadt1 | 1716 | 28.60 | 173 | 57600.20 – 61198.00 |
 | ingolstadt7 | 3031 | 50.52 | 292 | 57600.20 – 61199.70 |
 | ingolstadt21 | 4281 | 71.35 | 395 | 57600.00 – 61200.80 |
-:contentReference[oaicite:9]{index=9}
+
 
 ---
 
 ## 4) Ambiente e pipeline (SUMO + TraCI)
 L’ambiente è basato su **SUMO** (simulatore microscopico). L’interazione online avviene via **TraCI**, che consente di:
 - osservare lo stato (code, velocità, occupazioni, ecc.)
-- modificare dinamicamente le logiche semaforiche a runtime :contentReference[oaicite:10]{index=10}
+- modificare dinamicamente le logiche semaforiche a runtime
 
 SUMO richiede tipicamente:
 - rete `.net.xml`
 - domanda/percorsi `.rou.xml`
-- eventuali file addizionali (logiche semaforiche, sensori, output) :contentReference[oaicite:11]{index=11}
+- eventuali file addizionali (logiche semaforiche, sensori, output)
 
 ---
 
@@ -128,7 +128,7 @@ Metriche dai log SUMO, mediate sugli episodi di valutazione:
 | <font color="#2da44e"><b>MAPPO-GAT</b></font> | <font color="#2da44e"><b>1.47</b></font> | 5.52 | 4.82 |
 
 
-Interpretazione (sintesi): in regime non saturo l’RL supera nettamente fixed-time; policy-gradient/CTDE risultano più stabili dei value-based. :contentReference[oaicite:14]{index=14}
+Interpretazione (sintesi): in regime non saturo l’RL supera nettamente fixed-time; policy-gradient/CTDE risultano più stabili dei value-based. 
 
 ---
 
@@ -191,7 +191,7 @@ Interpretazione: regime congestion-driven e dipendenze diffuse; lo scenario è u
 Se lanci rollout in parallelo (Ray/RLlib), attenzione a:
 - porte TraCI distinte per ogni istanza SUMO
 - sincronizzazione step/ordine di esecuzione  
-Altrimenti possono emergere errori di connessione/desincronizzazione. :contentReference[oaicite:24]{index=24}
+Altrimenti possono emergere errori di connessione/desincronizzazione. 
 
 ### 8.2 Struttura attesa delle reti (RESCO)
 Gli scenari sono disponibili (nel framework usato) sotto:
@@ -233,8 +233,8 @@ python experiments/<scenario>/run_mappo_gat.py
 ---
 
 ## Riferimenti (selezione)
-- SUMO + TraCI (simulazione e controllo online) :contentReference[oaicite:26]{index=26}  
-- RESCO benchmark (scenari Cologne / Ingolstadt) :contentReference[oaicite:27]{index=27}  
+- SUMO + TraCI (simulazione e controllo online) 
+- RESCO benchmark (scenari Cologne / Ingolstadt) 
 - Lente “complessità di coordinazione” (dipendenze/interferenza/goal overlap) 
 
 ---
@@ -252,4 +252,3 @@ year = {2026},
 note = {Universit`a della Calabria, DIMES, A.A. 2025/2026}
 }
 
-:contentReference[oaicite:29]{index=29}
