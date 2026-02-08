@@ -240,7 +240,6 @@ python experiments/<scenario>/run_mappo_gat.py
 ---
 
 ## Licenza
-Scegli una licenza (MIT / Apache-2.0 / GPL-3.0) e inseriscila qui.
 
 ---
 
