@@ -38,37 +38,58 @@ Scenarios range from single-intersection environments to multi-intersection netw
 The experiments show that performance strongly depends on the traffic regime.
 
 - In some low- or medium-congestion settings, policy-gradient and CTDE approaches substantially improve traffic flow.
-- In multi-intersection scenarios, attention- and graph-based critics can exploit interactions between neighbouring signals.
+- In multi-intersection scenarios, attention-based critics can exploit interactions between neighbouring signals.
 - Under severe congestion, reinforcement learning does not automatically outperform fixed-time control; scalability and training stability remain important limitations.
-
-These failure cases are kept in the analysis because they are useful for understanding when coordination mechanisms help and when they do not.
 
 ## Tech stack
 
 - Python
-- SUMO
-- TraCI
+- SUMO / TraCI
 - Ray / RLlib
 - PyTorch
+- PettingZoo / SuperSuit
 - Multi-Agent Reinforcement Learning
-- Graph Attention Networks
+
+## Setup
+
+Install SUMO separately and make sure it is available in the environment. Then create an isolated Python environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+On Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
 
 ## Repository structure
 
 ```text
 SUMO_MARL/
 ├── experiments/
+│   ├── cologne1/
+│   ├── cologne3/
+│   ├── resco_ingolstadt1/
+│   ├── resco_ingolstadt7/
+│   └── resco_ingolstadt21/
+├── requirements.txt
 └── README.md
 ```
 
-The `experiments/` directory contains the experimental code and scenario-specific runs.
+Generated rollouts and CSV outputs are excluded from version control. Existing result figures are retained as experiment documentation.
 
 ## Reproducibility notes
 
-Parallel SUMO rollouts require separate TraCI ports and careful synchronization between simulator instances. The repository keeps these operational constraints explicit because they materially affect stable MARL experimentation.
+Parallel SUMO rollouts require separate TraCI ports and careful synchronization between simulator instances. Scripts use relative project paths where possible; `SUMO_OUT_DIR` can be set to override the evaluation-output location.
 
 ## Author
 
 **Paolo Pangallo**  
-M.Sc. candidate in Computer Engineering — Artificial Intelligence  
+M.Sc. Computer Engineering — Artificial Intelligence  
 University of Calabria

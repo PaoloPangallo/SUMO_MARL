@@ -1,18 +1,24 @@
 # Virtual env
 .venv/
+venv/
 
-# Python cache
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 
 # SUMO / RL outputs
 outputs/
+outputs_fixed_time/
 tmp_sumo_rl/
+ray_results/
+.ray_results/
 *.log
 
-# Large evaluation artifacts
+# Large generated evaluation artifacts
 *.csv
 
-# OS / IDE
+# IDE / OS
 .idea/
+.vscode/
 .DS_Store
+Thumbs.db

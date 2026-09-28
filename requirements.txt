@@ -1,0 +1,9 @@
+numpy
+pandas
+matplotlib
+torch
+ray[rllib]
+sumo-rl
+supersuit
+pettingzoo
+gymnasium
